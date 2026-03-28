@@ -792,8 +792,8 @@
           <thead>
             <tr>
               <th>Zona</th>
-              <th>Pace Mín. (lento)</th>
-              <th>Pace Máx. (rápido)</th>
+              <th>Pace (lento)</th>
+              <th>Pace (rápido)</th>
               <th>Passagens de Pista</th>
             </tr>
           </thead>
@@ -974,70 +974,88 @@ const ALTITUDE_TABLE = [
 // =====================
 // VDOT CALCULATION ENGINE
 // =====================
-function calcVO2(speedMs, timeSec) {
-  const S = speedMs;
-  const T = timeSec;
-  const numerator = -4.60 + 0.182258 * S + 0.000104 * S * S;
-  const denominator = 0.8 + 0.1894393 * Math.exp(-0.012778 * T) + 0.2989558 * Math.exp(-0.1932605 * T);
-  return numerator / denominator;
+//
+// The Daniels-Gilbert formula uses velocity in metres/minute and time in minutes.
+// VO2(V, T) = (-4.60 + 0.182258·V + 0.000104·V²)
+//            ÷ (0.8 + 0.1894393·e^(-0.012778·T) + 0.2989558·e^(-0.1932605·T))
+//
+// Training paces are derived using the steady-state approximation (T→∞, denominator→0.8)
+// with intensity fractions calibrated against Daniels' published tables.
+// Calibrated zone fractions (at T_SS = 10 000 min):
+//   E:  0.7746 – 0.8724   (≈ 59–74% VO2max at typical session T)
+//   M:  1.0147             (≈ marathon race intensity)
+//   T:  1.0971             (lactate threshold)
+//   I:  1.2153             (VO2max intervals)
+//   R:  1.3097             (anaerobic repetitions)
+
+const T_SS = 10000; // minutes — large enough that exp terms ≈ 0
+
+function danielsVO2(velMperMin, timeMin) {
+  const V = velMperMin, T = timeMin;
+  const num = -4.60 + 0.182258 * V + 0.000104 * V * V;
+  const den = 0.8 + 0.1894393 * Math.exp(-0.012778 * T) + 0.2989558 * Math.exp(-0.1932605 * T);
+  return num / den;
 }
 
+// Calculate VDOT from a race result (distKm, timeSec)
 function calcVDOT(distKm, timeSec) {
-  const distM = distKm * 1000;
-  const speedMs = distM / timeSec;
-  return calcVO2(speedMs, timeSec);
+  const velMperMin = (distKm * 1000) / (timeSec / 60);
+  const timeMin = timeSec / 60;
+  return danielsVO2(velMperMin, timeMin);
 }
 
-// Binary search to find time for a given VDOT at a distance
+// Binary search: find race time (seconds) for a given VDOT at distKm
 function vdotToTime(vdot, distKm) {
-  let lo = distKm * 60 * 0.6;  // fast bound
-  let hi = distKm * 60 * 10;   // slow bound
-  for (let i = 0; i < 80; i++) {
+  let lo = distKm * 40;   // ~40 s/km — faster than any human
+  let hi = distKm * 900;  // ~15 min/km — slower than walking
+  for (let i = 0; i < 120; i++) {
     const mid = (lo + hi) / 2;
-    const v = calcVDOT(distKm, mid);
-    if (v > vdot) lo = mid;
+    if (calcVDOT(distKm, mid) > vdot) lo = mid;
     else hi = mid;
-    if (hi - lo < 0.1) break;
+    if (hi - lo < 0.05) break;
   }
   return Math.round((lo + hi) / 2);
 }
 
-// VDOT -> speed in m/s for a given fraction
-function vdotFractionToSpeedMs(vdot, fraction) {
-  const targetVO2 = vdot * fraction;
-  // Solve: targetVO2 = calcVO2(S, T) for long enough T (use 20min reference)
-  const T = 1200;
-  // Rearrange: targetVO2 * denom = numerator
-  // numerator = -4.60 + 0.182258*S + 0.000104*S^2
-  // Solve quadratic
-  const denom = 0.8 + 0.1894393 * Math.exp(-0.012778 * T) + 0.2989558 * Math.exp(-0.1932605 * T);
-  const rhs = targetVO2 * denom;
-  const a = 0.000104, b = 0.182258, c = -4.60 - rhs;
-  const disc = b * b - 4 * a * c;
-  return (-b + Math.sqrt(disc)) / (2 * a);
-}
-
-function speedMsToPaceSecPerKm(speedMs) {
-  return 1000 / speedMs;
+// Find pace (sec/km) at which VO2 demand (steady-state) = targetVO2
+function findPaceForVO2ss(targetVO2) {
+  let lo = 100, hi = 900; // pace in sec/km
+  for (let i = 0; i < 150; i++) {
+    const mid = (lo + hi) / 2;
+    const velMperMin = 60000 / mid; // sec/km → m/min
+    if (danielsVO2(velMperMin, T_SS) > targetVO2) lo = mid;
+    else hi = mid;
+    if (hi - lo < 0.001) break;
+  }
+  return (lo + hi) / 2;
 }
 
 function calcPaces(vdot) {
-  const zones = {
-    E: { min: 0.59, max: 0.74 },
-    M: { min: 0.75, max: 0.84 },
-    T: { min: 0.83, max: 0.88 },
-    I: { min: 0.95, max: 1.00 },
-    R: { min: 1.00, max: 1.05 }
+  // Calibrated intensity fractions (derived from Daniels' published training pace tables)
+  // paceMin = fastest pace in zone (higher intensity fraction)
+  // paceMax = slowest pace in zone (lower intensity fraction)
+  return {
+    E: {
+      paceMin: findPaceForVO2ss(vdot * 0.8724), // fast end of Easy
+      paceMax: findPaceForVO2ss(vdot * 0.7746)  // slow end of Easy
+    },
+    M: {
+      paceMin: findPaceForVO2ss(vdot * 1.0147),
+      paceMax: findPaceForVO2ss(vdot * 1.0147)  // single pace
+    },
+    T: {
+      paceMin: findPaceForVO2ss(vdot * 1.0971),
+      paceMax: findPaceForVO2ss(vdot * 1.0971)  // single pace (book gives ±3s range)
+    },
+    I: {
+      paceMin: findPaceForVO2ss(vdot * 1.2153),
+      paceMax: findPaceForVO2ss(vdot * 1.2153)
+    },
+    R: {
+      paceMin: findPaceForVO2ss(vdot * 1.3097),
+      paceMax: findPaceForVO2ss(vdot * 1.3097)
+    }
   };
-  const result = {};
-  for (const [zone, { min, max }] of Object.entries(zones)) {
-    const speedMax = vdotFractionToSpeedMs(vdot, max);
-    const speedMin = vdotFractionToSpeedMs(vdot, min);
-    const paceMin = speedMsToPaceSecPerKm(speedMax); // faster pace = smaller number
-    const paceMax = speedMsToPaceSecPerKm(speedMin);
-    result[zone] = { paceMin, paceMax, speedMs: (speedMax + speedMin) / 2 };
-  }
-  return result;
 }
 
 // =====================
@@ -1202,8 +1220,8 @@ function renderPacesTable(paces) {
 
   const zones = [
     { key: 'E', label: 'E — Fácil', hasRange: true, track: null },
-    { key: 'M', label: 'M — Maratona', hasRange: true, track: null },
-    { key: 'T', label: 'T — Limiar', hasRange: true, track: null },
+    { key: 'M', label: 'M — Maratona', hasRange: false, track: null },
+    { key: 'T', label: 'T — Limiar', hasRange: false, track: null },
     { key: 'I', label: 'I — Intervalos', hasRange: false, track: [0.2, 0.4, 0.8, 1.0, 1.2] },
     { key: 'R', label: 'R — Repetições', hasRange: false, track: [0.2, 0.4] }
   ];
@@ -1286,14 +1304,29 @@ function calcTempHumAdj(tempC, humPct) {
 
 function calcAltitudeAdj(altM) {
   if (altM <= 1219) return { min: 0, max: 0 };
-  let entry = null;
-  let prevEntry = ALTITUDE_TABLE[0];
-  for (const row of ALTITUDE_TABLE) {
-    if (altM <= row.maxM) { entry = row; break; }
-    prevEntry = row;
+  if (altM >= 5000) return { min: 12.4, max: 15.5 };
+
+  // Linear interpolation between breakpoints
+  const breakpoints = [
+    { alt: 1219, min: 0,    max: 0    },
+    { alt: 1524, min: 2.5,  max: 3.1  },
+    { alt: 1829, min: 5.0,  max: 6.2  },
+    { alt: 2134, min: 7.5,  max: 9.3  },
+    { alt: 2438, min: 9.9,  max: 12.4 },
+    { alt: 5000, min: 12.4, max: 15.5 }
+  ];
+
+  for (let i = 0; i < breakpoints.length - 1; i++) {
+    const lo = breakpoints[i], hi = breakpoints[i + 1];
+    if (altM >= lo.alt && altM <= hi.alt) {
+      const t = (altM - lo.alt) / (hi.alt - lo.alt);
+      return {
+        min: lo.min + t * (hi.min - lo.min),
+        max: lo.max + t * (hi.max - lo.max)
+      };
+    }
   }
-  if (!entry) entry = ALTITUDE_TABLE[ALTITUDE_TABLE.length-1];
-  return { min: entry.minSec, max: entry.maxSec };
+  return { min: 12.4, max: 15.5 };
 }
 
 function calcGradeAdj(gainMPerKm, lossMPerKm) {
@@ -1348,14 +1381,14 @@ function applyAdjustments() {
 
   for (const z of zones) {
     const p = paces[z.key];
-    const baseStr = z.key === 'E' || z.key === 'M' || z.key === 'T'
+    const baseStr = z.key === 'E'
       ? `${fmtPaceShort(p.paceMax)}–${fmtPaceShort(p.paceMin)}`
       : fmtPaceShort(p.paceMin);
 
     let totalMinSec = 0, totalMaxSec = 0;
 
     // Temp/Hum adjustment (percentage-based)
-    const baseForCalc = (z.key === 'E' || z.key === 'M' || z.key === 'T') ? (p.paceMin + p.paceMax)/2 : p.paceMin;
+    const baseForCalc = z.key === 'E' ? (p.paceMin + p.paceMax)/2 : p.paceMin;
     totalMinSec += baseForCalc * tempHumAdj;
     totalMaxSec += baseForCalc * tempHumAdj;
 
@@ -1380,9 +1413,9 @@ function applyAdjustments() {
       adjStr = baseStr;
       deltaStr = '<span class="delta-zero">Sem ajuste</span>';
     } else {
-      const adjustedMin = (z.key === 'E' || z.key === 'M' || z.key === 'T') ? p.paceMax + totalMinSec : p.paceMin + totalMinSec;
-      const adjustedMax = (z.key === 'E' || z.key === 'M' || z.key === 'T') ? p.paceMin + totalMaxSec : p.paceMin + totalMaxSec;
-      adjStr = (z.key === 'E' || z.key === 'M' || z.key === 'T')
+      const adjustedMin = z.key === 'E' ? p.paceMax + totalMinSec : p.paceMin + totalMinSec;
+      const adjustedMax = z.key === 'E' ? p.paceMin + totalMaxSec : p.paceMin + totalMaxSec;
+      adjStr = z.key === 'E'
         ? `${fmtPaceShort(adjustedMin)}–${fmtPaceShort(adjustedMax)}`
         : fmtPaceShort(adjustedMin);
       const avgDelta = (totalMinSec + totalMaxSec) / 2;
@@ -1431,19 +1464,30 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTooltip
 function exportPDF() {
   if (!state.vdot) return;
   const btn = document.getElementById('pdf-btn');
-  btn.textContent = '⏳ A gerar PDF...';
+  btn.innerHTML = '⏳ A gerar PDF...';
   btn.disabled = true;
+
+  function doGenerate() {
+    try {
+      generatePDF();
+    } catch(e) {
+      alert('Erro ao gerar PDF: ' + e.message);
+    }
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg> Exportar PDF dos Ritmos`;
+    btn.disabled = false;
+  }
+
+  if (window.jspdf) {
+    doGenerate();
+    return;
+  }
 
   const script = document.createElement('script');
   script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-  script.onload = function() {
-    generatePDF();
-    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg> Exportar PDF dos Ritmos`;
-    btn.disabled = false;
-  };
+  script.onload = doGenerate;
   script.onerror = function() {
     alert('Não foi possível carregar a biblioteca jsPDF. Verifique a ligação à internet.');
-    btn.innerHTML = 'Exportar PDF dos Ritmos';
+    btn.innerHTML = '⬇ Exportar PDF dos Ritmos';
     btn.disabled = false;
   };
   document.head.appendChild(script);
@@ -1456,85 +1500,162 @@ function generatePDF() {
   const dist = DISTANCES[distKey];
   const today = new Date().toLocaleDateString('pt-PT');
 
-  // Header
+  // Header bar
   doc.setFillColor(231, 155, 16);
-  doc.rect(0, 0, 210, 30, 'F');
+  doc.rect(0, 0, 210, 32, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
+  doc.setFontSize(24);
   doc.setTextColor(51, 37, 1);
-  doc.text('CALCULADORA VDOT', 15, 18);
+  doc.text('CALCULADORA VDOT', 15, 19);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text('Jack Daniels Running Formula', 15, 25);
-  doc.setTextColor(51, 37, 1);
-  doc.text(today, 195, 20, { align: 'right' });
+  doc.text('Jack Daniels Running Formula', 15, 27);
+  doc.text(today, 195, 19, { align: 'right' });
 
-  // VDOT info
-  doc.setFontSize(12);
+  // VDOT summary block
+  doc.setFontSize(28);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(40, 40, 40);
-  doc.text(`VDOT: ${vdot.toFixed(1)}   |   Referência: ${dist.label} em ${fmtTime(timeSec)}`, 15, 42);
-  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(231, 155, 16);
+  doc.text(vdot.toFixed(1), 15, 52);
   doc.setFontSize(10);
-  doc.text(`Nível: ${getLevel(vdot).label}`, 15, 49);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100, 80, 40);
+  doc.text('VDOT', 15, 58);
+  doc.setTextColor(40, 40, 40);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${dist.label}  ·  ${fmtTime(timeSec)}`, 42, 50);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(100, 80, 40);
+  doc.text(getLevel(vdot).label, 42, 57);
 
-  // Paces table
-  doc.setFontSize(12);
+  // Divider
+  doc.setDrawColor(231, 155, 16);
+  doc.setLineWidth(0.5);
+  doc.line(15, 63, 195, 63);
+
+  // Section title
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(40, 40, 40);
-  doc.text('Ritmos de Treino', 15, 60);
+  doc.text('RITMOS DE TREINO', 15, 71);
 
-  let y = 65;
-  const zoneData = [
-    ['E — Fácil', fmtPaceShort(paces.E.paceMax), fmtPaceShort(paces.E.paceMin), '—'],
-    ['M — Maratona', fmtPaceShort(paces.M.paceMax), fmtPaceShort(paces.M.paceMin), '—'],
-    ['T — Limiar', fmtPaceShort(paces.T.paceMax), fmtPaceShort(paces.T.paceMin), '—'],
-    ['I — Intervalos', fmtPaceShort(paces.I.paceMin), '—', `200m:${fmtTrackTime(0.2,paces.I.paceMin)} | 400m:${fmtTrackTime(0.4,paces.I.paceMin)} | 800m:${fmtTrackTime(0.8,paces.I.paceMin)}`],
-    ['R — Repetições', fmtPaceShort(paces.R.paceMin), '—', `200m:${fmtTrackTime(0.2,paces.R.paceMin)} | 400m:${fmtTrackTime(0.4,paces.R.paceMin)}`],
-  ];
-  const colors = ['#FFE96A','#FFB446','#FFB92E','#E79B10','#A16700'];
-  const textColors = [false,false,false,true,true]; // true = white text
+  let y = 76;
 
-  // Header row
+  // Table header
   doc.setFillColor(51, 37, 1);
   doc.rect(15, y, 180, 8, 'F');
-  doc.setTextColor(255,185,46);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(9);
-  doc.text('Zona', 18, y+5.5);
-  doc.text('Pace Mín.', 65, y+5.5);
-  doc.text('Pace Máx.', 100, y+5.5);
-  doc.text('Passagens de Pista', 135, y+5.5);
+  doc.setTextColor(255, 185, 46);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('ZONA', 18, y + 5.5);
+  doc.text('PACE', 70, y + 5.5);
+  doc.text('PASSAGENS DE PISTA', 115, y + 5.5);
   y += 8;
 
+  // Zone rows — E has range, others single pace
+  const zoneRows = [
+    {
+      label: 'E — Fácil',
+      pace: `${fmtPaceShort(paces.E.paceMax)} – ${fmtPaceShort(paces.E.paceMin)} /km`,
+      track: '—',
+      color: '#FFE96A', dark: false
+    },
+    {
+      label: 'M — Maratona',
+      pace: `${fmtPaceShort(paces.M.paceMin)} /km`,
+      track: '—',
+      color: '#FFB446', dark: false
+    },
+    {
+      label: 'T — Limiar',
+      pace: `${fmtPaceShort(paces.T.paceMin)} /km`,
+      track: '—',
+      color: '#FFB92E', dark: false
+    },
+    {
+      label: 'I — Intervalos',
+      pace: `${fmtPaceShort(paces.I.paceMin)} /km`,
+      track: `200m: ${fmtTrackTime(0.2,paces.I.paceMin)}  400m: ${fmtTrackTime(0.4,paces.I.paceMin)}  800m: ${fmtTrackTime(0.8,paces.I.paceMin)}  1km: ${fmtTrackTime(1.0,paces.I.paceMin)}`,
+      color: '#E79B10', dark: true
+    },
+    {
+      label: 'R — Repetições',
+      pace: `${fmtPaceShort(paces.R.paceMin)} /km`,
+      track: `200m: ${fmtTrackTime(0.2,paces.R.paceMin)}  400m: ${fmtTrackTime(0.4,paces.R.paceMin)}`,
+      color: '#A16700', dark: true
+    },
+  ];
+
   doc.setFontSize(9);
-  zoneData.forEach((row, i) => {
-    const hex = colors[i];
-    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-    doc.setFillColor(r,g,b);
-    doc.rect(15, y, 180, 9, 'F');
-    doc.setTextColor(textColors[i] ? 255 : 51, textColors[i] ? 255 : 37, textColors[i] ? 255 : 1);
-    doc.setFont('helvetica','bold');
-    doc.text(row[0], 18, y+6);
-    doc.setFont('helvetica','normal');
-    doc.text(row[1] + ' /km', 65, y+6);
-    doc.text(row[2], 100, y+6);
-    doc.setFontSize(7.5);
-    doc.text(row[3], 135, y+6);
+  zoneRows.forEach(row => {
+    const r = parseInt(row.color.slice(1,3),16);
+    const g = parseInt(row.color.slice(3,5),16);
+    const b = parseInt(row.color.slice(5,7),16);
+    doc.setFillColor(r, g, b);
+    doc.rect(15, y, 180, 10, 'F');
+    const tc = row.dark ? 255 : 40;
+    doc.setTextColor(tc, row.dark ? 240 : 30, row.dark ? 200 : 5);
+    doc.setFont('helvetica', 'bold');
+    doc.text(row.label, 18, y + 6.5);
+    doc.setFont('helvetica', 'normal');
+    doc.text(row.pace, 70, y + 6.5);
+    doc.setFontSize(8);
+    doc.text(row.track, 115, y + 6.5);
     doc.setFontSize(9);
-    y += 9;
+    y += 10;
   });
 
+  // Equivalents section
+  y += 6;
+  doc.setDrawColor(231, 155, 16);
+  doc.setLineWidth(0.3);
+  doc.line(15, y, 195, y);
+  y += 6;
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(40, 40, 40);
+  doc.text('TEMPOS EQUIVALENTES PREVISTOS', 15, y);
+  y += 6;
+
+  doc.setFillColor(51, 37, 1);
+  doc.rect(15, y, 180, 8, 'F');
+  doc.setTextColor(255, 185, 46);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('DISTÂNCIA', 18, y + 5.5);
+  doc.text('TEMPO PREVISTO', 90, y + 5.5);
+  doc.text('PACE MÉDIO', 145, y + 5.5);
+  y += 8;
+
+  let rowOdd = false;
+  for (const [key, d] of Object.entries(DISTANCES)) {
+    const predSec = key === distKey ? timeSec : vdotToTime(vdot, d.km);
+    const pace = predSec / d.km;
+    const isRef = key === distKey;
+    doc.setFillColor(isRef ? 255 : (rowOdd ? 248 : 255), isRef ? 230 : (rowOdd ? 243 : 255), isRef ? 180 : (rowOdd ? 220 : 255));
+    doc.rect(15, y, 180, 9, 'F');
+    doc.setTextColor(40, 40, 40);
+    doc.setFont('helvetica', isRef ? 'bold' : 'normal');
+    doc.setFontSize(9);
+    doc.text(d.label + (isRef ? ' ◀' : ''), 18, y + 6);
+    doc.text(fmtTime(predSec), 90, y + 6);
+    doc.text(fmtPace(pace), 145, y + 6);
+    y += 9;
+    rowOdd = !rowOdd;
+  }
+
   // Footer
-  y = 275;
   doc.setFontSize(7);
-  doc.setTextColor(120,120,120);
-  doc.setFont('helvetica','normal');
-  const disclaimer = 'Ritmos calculados pelo Sistema VDOT (Daniels & Gilbert). Valores indicativos — consulte um treinador qualificado. VDOT é marca registada da The Run SMART Project, LLC.';
-  doc.text(disclaimer, 15, y, { maxWidth: 180 });
+  doc.setTextColor(140, 120, 90);
+  doc.setFont('helvetica', 'normal');
+  const disclaimer = 'Ritmos calculados pelo Sistema VDOT (Daniels & Gilbert, 1979). Valores indicativos — consulte um treinador qualificado.\nVDOT é marca registada da The Run SMART Project, LLC. Esta calculadora não é endossada nem afiliada à The Run SMART Project ou ao Dr. Jack Daniels.';
+  doc.text(disclaimer, 15, 278, { maxWidth: 180 });
 
   const distLabel = distKey === 'half' ? 'HM' : distKey === 'full' ? 'MAR' : `${distKey}km`;
-  const dateStr = new Date().toISOString().slice(0,10);
+  const dateStr = new Date().toISOString().slice(0, 10);
   doc.save(`vdot-${vdot.toFixed(1)}-${distLabel}-${dateStr}.pdf`);
 }
 
