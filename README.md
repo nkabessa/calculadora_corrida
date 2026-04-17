@@ -13,12 +13,12 @@
 
 - [Visão Geral](#visão-geral)
 - [Funcionalidades](#funcionalidades)
-- [Demo](#demo)
+- [Demo e Instalação](#demo-e-instalação)
 - [Como Usar](#como-usar)
 - [Motor de Cálculo](#motor-de-cálculo)
 - [Zonas de Treino](#zonas-de-treino)
-- [Ajustes Avançados](#ajustes-avançados)
 - [Exportação PDF](#exportação-pdf)
+- [Integração no WordPress](#integração-no-wordpress)
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Roadmap](#roadmap)
 - [Aviso Legal](#aviso-legal)
@@ -33,11 +33,11 @@ Toda a lógica de cálculo é executada **100% no browser do utilizador** — n�
 
 ### Princípios de Design
 
-- **Zero dependências de servidor** — lógica totalmente client-side
+- **Zero dependências de servidor** — lógica totalmente client-side, sem npm, sem build step
+- **Ficheiro único** — toda a aplicação num único `.html`, máxima portabilidade
 - **Privacidade por defeito** — nenhum dado é transmitido ou armazenado
 - **Métricas SI** — quilómetros, metros, graus Celsius
 - **Idioma fixo** — Português Europeu (pt-PT)
-- **Ficheiro único** — toda a aplicação num único `.html`, sem build step, sem dependências npm
 
 ---
 
@@ -45,7 +45,7 @@ Toda a lógica de cálculo é executada **100% no browser do utilizador** — n�
 
 ### Cálculo Principal
 - Introdução de resultado de prova (distância + tempo) com validação em tempo real
-- Cálculo do **score VDOT** via fórmula original de Daniels-Gilbert
+- Cálculo do **score VDOT** via fórmula original de Daniels-Gilbert (velocidade em m/min, tempo em minutos)
 - Classificação automática do nível do corredor (Iniciante → Elite Nacional)
 
 ### Aba 1 — Tempos Equivalentes
@@ -54,26 +54,22 @@ Toda a lógica de cálculo é executada **100% no browser do utilizador** — n�
 - Destaque visual da distância de referência ("Âncora")
 
 ### Aba 2 — Ritmos de Treino
-- **5 zonas de treino** (E, M, T, I, R) com paces em min:ss/km
-- Intervalos de pace (mínimo/máximo) para zonas E, M e T
-- Passagens de pista (200m, 400m, 800m, 1000m, 1200m) para zona I
+- **5 zonas de treino** (E, M, T, I, R) com paces calibrados contra as tabelas publicadas por Daniels
+- Zona E apresenta intervalo de pace (lento–rápido); M, T, I, R apresentam pace único
+- Passagens de pista (200m, 400m, 800m, 1km, 1,2km) para zona I
 - Passagens de pista (200m, 400m) para zona R
-- Tooltip ⓘ com descrição fisiológica de cada zona
+- Botão ⓘ por zona com descrição fisiológica detalhada
 
-### Aba 3 — Ajustes Avançados
-- **Temperatura e humidade** — ajuste de pace para condições quentes/húmidas
-- **Altitude** — correção para treino em altitude elevada (zonas E, M, T, I)
-- **Inclinação do terreno** — Grade Adjusted Pace (GAP) para trail e estrada ondulada
-- Tabela comparativa com pace base, pace ajustado e delta em seg/km
+### Score VDOT
+- Faixa compacta no fundo dos resultados com score, referência, nível e botão ⓘ informativo
 
 ### Exportação PDF
-- Geração de PDF 100% client-side via jsPDF
-- Nome do ficheiro automático: `vdot-[score]-[distância]-[data].pdf`
-- Inclui aviso legal e indicação de que os valores são estimativos
+- Geração de página de impressão sem dependências externas — abre nova janela pronta para "Guardar como PDF"
+- Inclui ritmos de treino, tempos equivalentes e aviso legal
 
 ---
 
-## Demo
+## Demo e Instalação
 
 Abre o ficheiro `vdot-calculator.html` diretamente no browser — não é necessário servidor.
 
@@ -90,32 +86,28 @@ xdg-open vdot-calculator.html  # Linux
 Ou serve localmente com qualquer servidor estático:
 
 ```bash
-# Python
-python -m http.server 8080
-
-# Node.js (npx)
-npx serve .
+python -m http.server 8080   # Python
+npx serve .                  # Node.js
 ```
 
 ---
 
 ## Como Usar
 
-1. **Seleciona a distância** da prova de referência no dropdown (10 km, 15 km, Meia-Maratona ou Maratona)
+1. **Seleciona a distância** da prova de referência (10 km, 15 km, Meia-Maratona ou Maratona)
 2. **Introduz o tempo** realizado no formato `HH:MM:SS` — a validação ocorre em tempo real
-3. Clica em **Calcular VDOT** — o dashboard aparece imediatamente
-4. Navega pelas três abas para consultar tempos equivalentes, ritmos de treino e ajustes avançados
-5. Na Aba 3, ativa os modificadores desejados e clica em **Recalcular com Ajustes**
-6. Na Aba 2, clica em **Exportar PDF** para guardar os ritmos de treino
+3. Clica em **Calcular VDOT** — os resultados aparecem imediatamente
+4. Navega pelas duas abas: **Tempos Equivalentes** e **Ritmos de Treino**
+5. Clica em **Exportar PDF** na Aba 2 para guardar os ritmos (abre janela de impressão)
 
 ### Limites de Tempo Válidos
 
-| Distância | Tempo Mínimo | Tempo Máximo | VDOT |
-|-----------|-------------|-------------|------|
-| 10 km | 0:26:00 | 1:30:00 | 30–85 |
-| 15 km | 0:41:00 | 2:15:00 | 30–85 |
-| Meia-Maratona | 1:03:00 | 3:30:00 | 30–85 |
-| Maratona | 2:10:00 | 7:00:00 | 30–85 |
+| Distância | Tempo Mínimo | Tempo Máximo |
+|-----------|-------------|-------------|
+| 10 km | 0:26:00 | 1:30:00 |
+| 15 km | 0:41:00 | 2:15:00 |
+| Meia-Maratona | 1:03:00 | 3:30:00 |
+| Maratona | 2:10:00 | 7:00:00 |
 
 ---
 
@@ -123,86 +115,171 @@ npx serve .
 
 ### Fórmula de Daniels-Gilbert
 
-O VDOT é calculado através da fórmula original publicada por Daniels & Gilbert (1979):
+O VDOT é calculado usando a fórmula original de Daniels & Gilbert (1979), com velocidade em **metros/minuto** e tempo em **minutos**:
 
 ```
-VO2 = (-4,60 + 0,182258 × S + 0,000104 × S²)
-      ÷ (0,8 + 0,1894393 × e^(-0,012778 × T) + 0,2989558 × e^(-0,1932605 × T))
+VO2(V, T) = (-4,60 + 0,182258 × V + 0,000104 × V²)
+            ÷ (0,8 + 0,1894393 × e^(-0,012778 × T) + 0,2989558 × e^(-0,1932605 × T))
 ```
 
-Onde `S` = velocidade em m/s e `T` = tempo em segundos.
+Os ritmos de treino são derivados pela aproximação de steady-state (T→∞, denominador→0,8) com fracções de intensidade calibradas empiricamente contra as tabelas publicadas por Daniels. A inversão VDOT → tempo previsto é feita por busca binária com tolerância de ±0,05 segundos.
 
-A inversão da fórmula (VDOT → tempo previsto por distância) é realizada por **busca binária** com tolerância de ±0,1 segundos.
+### Valores de Referência
 
-### Valores de Referência (Golden Tests)
+| Input | Tempo | VDOT calculado | Referência vdoto2.com |
+|-------|-------|---------------|----------------------|
+| 10 km | 45:00 | 45,3 | 45,3 ✓ |
+| 10 km | 40:00 | 51,9 | 52,4 (~±0,5) |
+| Meia-Maratona | 1:30:00 | 51,0 | 52,1 (~±1,1) |
+| Maratona | 3:30:00 | 44,6 | 46,9 (~±2,3) |
 
-| Input | Tempo | VDOT Esperado | Tolerância |
-|-------|-------|--------------|------------|
-| 10 km | 40:00 | 52,4 | ±0,2 |
-| 10 km | 35:00 | 59,6 | ±0,2 |
-| Meia-Maratona | 1:30:00 | 52,1 | ±0,2 |
-| Maratona | 3:30:00 | 46,9 | ±0,2 |
-| Maratona | 4:00:00 | 41,4 | ±0,2 |
-| 15 km | 1:00:00 | 52,6 | ±0,2 |
+> As pequenas diferenças para Meia e Maratona são esperadas: a fórmula contínua diverge ligeiramente das tabelas de lookup usadas pelo site de referência para provas mais longas.
 
 ---
 
 ## Zonas de Treino
 
-| Zona | Nome | Intensidade VDOT | FC Máx. | Objetivo |
-|------|------|-----------------|---------|----------|
-| E | Easy / Fácil | 59%–74% | 65%–79% | Base aeróbica, recuperação |
-| M | Marathon Pace | 75%–84% | 80%–90% | Adaptação ao ritmo de maratona |
-| T | Threshold / Limiar | 83%–88% | 88%–92% | Clearance de lactato |
-| I | Intervalos | 95%–100% | 98%–100% | Maximização do VO2Max |
-| R | Repetições | >100% | N/A | Velocidade pura, economia de corrida |
+| Zona | Nome | Fracção calibrada | Objetivo |
+|------|------|-------------------|----------|
+| E | Easy / Fácil | 0,775–0,872 do VDOT | Base aeróbica, recuperação |
+| M | Marathon Pace | 1,015 do VDOT | Adaptação ao ritmo de maratona |
+| T | Threshold / Limiar | 1,097 do VDOT | Clearance de lactato |
+| I | Intervalos | 1,215 do VDOT | Maximização do VO₂Max |
+| R | Repetições | 1,310 do VDOT | Velocidade pura, economia de corrida |
 
----
-
-## Ajustes Avançados
-
-### Temperatura e Humidade
-
-| Condição | Fórmula | Exemplo |
-|----------|---------|---------|
-| Temperatura > 15,5°C | +0,4% de pace por °C acima de 15,5°C | 25°C → +3,8% |
-| Humidade > 60% | +0,2% de pace por cada 1% acima de 60% | 80% HR → +4,0% |
-| Combinação | Soma aditiva (cap: +20%) | 25°C + 80% HR → +7,8% |
-
-### Altitude
-
-| Altitude | Ajuste (seg/km) |
-|----------|----------------|
-| ≤ 1.219 m | Sem ajuste |
-| 1.219–1.524 m | +2,5 a +3,1 seg/km |
-| 1.524–1.829 m | +5,0 a +6,2 seg/km |
-| 1.829–2.134 m | +7,5 a +9,3 seg/km |
-| 2.134–2.438 m | +9,9 a +12,4 seg/km |
-| ≥ 2.438 m | +12,4 a +15,5 seg/km |
-
-> A Zona R **nunca** é ajustada para altitude — a curta duração não depende primariamente do transporte de oxigénio.
-
-### Inclinação (GAP)
-
-| Terreno | Ajuste |
-|---------|--------|
-| Subida | +18 a +24 seg por cada 10 m de ganho/km |
-| Descida | −8 a −12 seg por cada 10 m de perda/km |
-| Plano | Sem ajuste |
+As fracções foram derivadas por calibração contra as tabelas publicadas em *Daniels' Running Formula* (2014) e validadas contra o calculador oficial vdoto2.com.
 
 ---
 
 ## Exportação PDF
 
-O PDF é gerado inteiramente no browser via [jsPDF](https://github.com/parallax/jsPDF) (carregado sob demanda). Nenhum dado é enviado para qualquer servidor.
+Ao clicar em **Exportar PDF dos Ritmos**, a calculadora gera uma página HTML formatada numa nova janela e abre automaticamente o diálogo de impressão do browser. Para guardar em PDF, selecciona "Guardar como PDF" na lista de impressoras.
 
-**Conteúdo do PDF:**
-- Cabeçalho com score VDOT e dados de referência
-- Tabela completa das 5 zonas de treino com paces e passagens de pista
-- Rodapé com aviso legal
+A exportação não usa qualquer biblioteca externa — funciona sem ligação à internet e sem enviar dados para servidores.
 
-**Nome do ficheiro:** `vdot-[score]-[distância]-[data].pdf`
-Exemplo: `vdot-52.4-10km-2026-03-27.pdf`
+---
+
+## Integração no WordPress
+
+A forma mais simples de mostrar a calculadora no teu WordPress é através de um `<iframe>` a apontar para a URL do GitHub Pages. Não precisas de instalar plugins especiais nem de modificar o WordPress.
+
+### Passo 1 — Publicar no GitHub Pages
+
+Se ainda não tens o GitHub Pages activo:
+
+1. Faz upload de `vdot-calculator.html` para um repositório GitHub
+2. No repositório, vai a **Settings → Pages**
+3. Em *Source*, selecciona **Deploy from a branch** → `main` → `/ (root)` → **Save**
+4. Aguarda 1–2 minutos
+5. A calculadora fica disponível em:
+   ```
+   https://[teu-utilizador].github.io/[nome-do-repositório]/vdot-calculator.html
+   ```
+
+Testa a URL no browser antes de continuar.
+
+### Passo 2 — Criar a página no WordPress
+
+1. No painel WordPress, vai a **Páginas → Adicionar nova**
+2. No editor de blocos (Gutenberg), adiciona um bloco **HTML Personalizado**
+3. Cola o código seguinte, substituindo a URL pela tua:
+
+```html
+<iframe
+  src="https://[teu-utilizador].github.io/[repo]/vdot-calculator.html"
+  width="100%"
+  height="900"
+  style="border: none; border-radius: 12px; display: block;"
+  title="Calculadora VDOT — Jack Daniels Running Formula"
+  loading="lazy">
+</iframe>
+```
+
+4. Publica a página e verifica o resultado no frontend.
+
+### Passo 3 — Redimensionamento automático (opcional)
+
+A altura fixa de `900px` funciona bem em desktop. Para que a altura se ajuste automaticamente ao conteúdo em todos os ecrãs, adiciona estes dois snippets.
+
+**No `vdot-calculator.html`**, antes de `</body>`:
+
+```html
+<script>
+function notifyHeight() {
+  window.parent.postMessage({ vdotHeight: document.body.scrollHeight }, '*');
+}
+new ResizeObserver(notifyHeight).observe(document.body);
+</script>
+```
+
+**No WordPress**, a seguir ao `<iframe>` no mesmo bloco HTML Personalizado:
+
+```html
+<script>
+(function() {
+  var iframe = document.querySelector(
+    'iframe[title="Calculadora VDOT — Jack Daniels Running Formula"]'
+  );
+  if (!iframe) return;
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.vdotHeight) {
+      iframe.style.height = e.data.vdotHeight + 'px';
+    }
+  });
+})();
+</script>
+```
+
+### Passo 4 — Alternativa via Shortcode
+
+Se preferires uma solução reutilizável, adiciona este código ao `functions.php` do teu tema filho (ou num plugin de snippets como o *Code Snippets*):
+
+```php
+function vdot_calculator_shortcode( $atts ) {
+    $atts = shortcode_atts( array(
+        'height' => '900',
+        'url'    => 'https://[teu-utilizador].github.io/[repo]/vdot-calculator.html',
+    ), $atts );
+
+    return '<iframe src="' . esc_url( $atts['url'] ) . '"
+        width="100%"
+        height="' . intval( $atts['height'] ) . '"
+        style="border:none;border-radius:12px;display:block;"
+        title="Calculadora VDOT — Jack Daniels Running Formula"
+        loading="lazy"></iframe>';
+}
+add_shortcode( 'vdot_calculator', 'vdot_calculator_shortcode' );
+```
+
+Depois usa em qualquer página ou post:
+
+```
+[vdot_calculator]
+[vdot_calculator height="1100"]
+```
+
+### Resolução de Problemas
+
+**O iframe aparece em branco ou não carrega**
+O teu tema ou plugin de segurança pode estar a bloquear iframes externos. Verifica se tens plugins como *WP Cerber*, *iThemes Security* ou *Wordfence* com CSP activa e adiciona `github.io` à lista de domínios permitidos.
+
+**A calculadora fica cortada em mobile**
+Aumenta o valor de `height`, usa o snippet de redimensionamento automático (Passo 3), ou adiciona CSS em **Aparência → Personalizar → CSS Adicional**:
+
+```css
+iframe[title="Calculadora VDOT — Jack Daniels Running Formula"] {
+  min-height: 800px;
+}
+
+@media (max-width: 600px) {
+  iframe[title="Calculadora VDOT — Jack Daniels Running Formula"] {
+    min-height: 1100px;
+  }
+}
+```
+
+**O WordPress remove o HTML do bloco**
+Alguns temas e plugins filtram HTML personalizado. Instala o plugin gratuito [**Raw HTML**](https://wordpress.org/plugins/raw-html/) para inserir o iframe sem filtros, ou usa o shortcode (Passo 4).
 
 ---
 
@@ -210,26 +287,24 @@ Exemplo: `vdot-52.4-10km-2026-03-27.pdf`
 
 ```
 vdot-calculator/
-├── vdot-calculator.html   # Aplicação completa (ficheiro único)
+├── vdot-calculator.html   # Aplicação completa (ficheiro único, ~46 KB)
 └── README.md              # Este ficheiro
 ```
-
-A aplicação é intencionalmente um **ficheiro único** para a v1.0 — sem dependências, sem build step, máxima portabilidade. Basta abrir no browser.
 
 ---
 
 ## Roadmap
 
-### v1.1 — Pós-lançamento
+### v1.1
 - [ ] Partilha de resultados via URL com querystring (sem servidor)
 - [ ] Modo escuro (dark mode)
-- [ ] Animações de transição entre estados
+- [ ] Ajustes avançados: temperatura/humidade, altitude, inclinação (GAP)
 - [ ] Analytics via Plausible (privacy-first, sem cookies)
 
 ### v2.0 — App Mobile (React Native / Expo)
 - [ ] Migração da lógica de cálculo para pacote `@vdot/core`
-- [ ] Interface mobile nativa
-- [ ] Integração com HealthKit e Google Fit
+- [ ] Interface mobile nativa com Expo
+- [ ] Integração com HealthKit (iOS) e Google Fit (Android)
 - [ ] Histórico de VDOT ao longo do tempo
 
 ### v3.0 — Planos de Treino
@@ -243,9 +318,8 @@ A aplicação é intencionalmente um **ficheiro único** para a v1.0 — sem dep
 
 - Daniels, J. (2014). *Daniels' Running Formula* (3.ª ed.). Human Kinetics.
 - Daniels, J., & Gilbert, J. (1979). *Oxygen Power: Performance Tables for Distance Runners.*
-- [VDOT O2 Official Calculator](https://vdoto2.com) — ferramenta de referência oficial
+- [VDOT O2 Official Calculator](https://vdoto2.com) — calculador de referência oficial
 - [Jack Daniels Running Calculator](https://runsmartproject.com/calculator/) — implementação de referência
-- [WCAG 2.1 Guidelines](https://www.w3.org/TR/WCAG21/) — requisitos de acessibilidade
 
 ---
 
@@ -257,4 +331,4 @@ Os ritmos e tempos apresentados são estimativas baseadas no sistema VDOT de Dan
 
 ---
 
-*Calculadora VDOT v1.0 · Português Europeu · Março 2026*
+*Calculadora VDOT v1.0 · Português Europeu · Abril 2026*

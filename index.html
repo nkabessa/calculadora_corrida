@@ -259,7 +259,7 @@
   .btn-secondary:hover { border-color: var(--amber); color: var(--amber); }
 
   /* VDOT SCORE CARD */
-  .score-section { margin-top: 40px; display: none; }
+  .score-section { margin-top: 32px; display: none; }
   .score-section.visible { display: block; animation: fadeUp 0.4s ease; }
 
   @keyframes fadeUp {
@@ -267,63 +267,83 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .score-card {
-    background: linear-gradient(135deg, var(--amber) 0%, var(--gold-warm) 40%, var(--amber) 100%);
-    border-radius: 20px;
-    padding: 36px 40px;
+  /* TABS */
+  .tabs-section { margin-top: 0; }
+  .vdot-strip {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 24px;
+    margin-top: 16px;
     display: flex;
     align-items: center;
-    gap: 32px;
+    gap: 16px;
     flex-wrap: wrap;
-    box-shadow: 0 12px 40px rgba(231,155,16,0.4);
-    position: relative;
-    overflow: hidden;
   }
-  .score-card::before {
-    content: '';
-    position: absolute;
-    top: -40px; right: -40px;
-    width: 200px; height: 200px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-  }
-  .vdot-number {
+  .vdot-strip-score {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 96px;
+    font-size: 42px;
     line-height: 1;
-    color: var(--brown-dark);
-    letter-spacing: -2px;
+    color: var(--amber);
+    letter-spacing: -1px;
+    flex-shrink: 0;
   }
-  .vdot-label-block { flex: 1; min-width: 200px; }
-  .vdot-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: rgba(51,37,1,0.65);
+  .vdot-strip-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border);
+    flex-shrink: 0;
   }
-  .vdot-ref {
-    font-family: 'DM Mono', monospace;
-    font-size: 20px;
-    font-weight: 500;
-    color: var(--brown-dark);
-    margin: 4px 0;
-  }
-  .vdot-level {
-    display: inline-block;
-    background: var(--brown-dark);
-    color: var(--gold-light);
-    font-size: 12px;
+  .vdot-strip-meta { flex: 1; min-width: 160px; }
+  .vdot-strip-label {
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    padding: 4px 14px;
+    color: var(--text-light);
+  }
+  .vdot-strip-ref {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--text);
+    margin-top: 2px;
+  }
+  .vdot-strip-level {
+    display: inline-block;
+    background: var(--amber);
+    color: var(--brown-dark);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 10px;
     border-radius: 20px;
-    margin-top: 6px;
+    margin-top: 4px;
+  }
+  .vdot-info-btn {
+    margin-left: auto;
+    background: none;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 15px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .vdot-info-btn:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+    background: rgba(231,155,16,0.08);
   }
 
   /* TABS */
-  .tabs-section { margin-top: 32px; }
+  .tabs-section { margin-top: 0; }
   .tab-nav {
     display: flex;
     gap: 4px;
@@ -698,8 +718,9 @@
 
   /* RESPONSIVE */
   @media (max-width: 680px) {
-    .score-card { flex-direction: column; gap: 16px; text-align: center; padding: 28px 24px; }
-    .vdot-number { font-size: 72px; }
+    .vdot-strip { gap: 12px; padding: 14px 16px; }
+    .vdot-strip-score { font-size: 32px; }
+    .vdot-strip-divider { display: none; }
     .results-table { font-size: 13px; }
     .results-table td, .results-table th { padding: 10px 8px; }
     .zone-pill { font-size: 14px; padding: 4px 10px; }
@@ -754,22 +775,11 @@
   <!-- RESULTS -->
   <div class="score-section" id="results-section">
 
-    <!-- SCORE CARD -->
-    <div class="score-card">
-      <div class="vdot-number" id="vdot-display">--</div>
-      <div class="vdot-label-block">
-        <div class="vdot-label">Score VDOT</div>
-        <div class="vdot-ref" id="vdot-ref-display">-- em --</div>
-        <div class="vdot-level" id="vdot-level-display">--</div>
-      </div>
-    </div>
-
-    <!-- TABS -->
+    <!-- TABS (only 2 now) -->
     <div class="tabs-section">
       <nav class="tab-nav" role="tablist">
         <button class="tab-btn active" role="tab" aria-selected="true" data-tab="tab1">⏱ Tempos Equivalentes</button>
         <button class="tab-btn" role="tab" aria-selected="false" data-tab="tab2">🏃 Ritmos de Treino</button>
-        <button class="tab-btn" role="tab" aria-selected="false" data-tab="tab3">⚙ Ajustes Avançados</button>
       </nav>
 
       <!-- TAB 1: Race Times -->
@@ -804,72 +814,20 @@
           Exportar PDF dos Ritmos
         </button>
       </div>
-
-      <!-- TAB 3: Advanced Adjustments -->
-      <div class="tab-panel" id="tab3" role="tabpanel">
-
-        <div class="adj-section">
-          <div class="adj-toggle-row" onclick="toggleAdj('tempHum')">
-            <div class="adj-title">🌡 Temperatura e Humidade</div>
-            <label class="toggle" onclick.stop>
-              <input type="checkbox" id="toggle-tempHum" onchange="toggleAdj('tempHum', this.checked)">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="adj-fields" id="fields-tempHum">
-            <div class="field">
-              <label for="adj-temp">Temperatura (°C)</label>
-              <input type="number" id="adj-temp" min="-10" max="50" placeholder="ex: 28" value="">
-            </div>
-            <div class="field">
-              <label for="adj-hum">Humidade Relativa (%)</label>
-              <input type="number" id="adj-hum" min="0" max="100" placeholder="ex: 75" value="">
-            </div>
-          </div>
-        </div>
-
-        <div class="adj-section">
-          <div class="adj-toggle-row" onclick="toggleAdj('altitude')">
-            <div class="adj-title">⛰ Altitude</div>
-            <label class="toggle" onclick.stop>
-              <input type="checkbox" id="toggle-altitude" onchange="toggleAdj('altitude', this.checked)">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="adj-fields" id="fields-altitude" style="grid-template-columns: 1fr;">
-            <div class="field">
-              <label for="adj-alt">Altitude (metros)</label>
-              <input type="number" id="adj-alt" min="0" max="5000" placeholder="ex: 2100" value="">
-            </div>
-          </div>
-        </div>
-
-        <div class="adj-section">
-          <div class="adj-toggle-row" onclick="toggleAdj('grade')">
-            <div class="adj-title">🏔 Inclinação do Terreno</div>
-            <label class="toggle" onclick.stop>
-              <input type="checkbox" id="toggle-grade" onchange="toggleAdj('grade', this.checked)">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="adj-fields" id="fields-grade">
-            <div class="field">
-              <label for="adj-gain">Ganho de Elevação (m/km)</label>
-              <input type="number" id="adj-gain" min="0" max="200" placeholder="ex: 40" value="">
-            </div>
-            <div class="field">
-              <label for="adj-loss">Perda de Elevação (m/km)</label>
-              <input type="number" id="adj-loss" min="0" max="200" placeholder="ex: 20" value="">
-            </div>
-          </div>
-        </div>
-
-        <button class="recalc-btn" onclick="applyAdjustments()">Recalcular com Ajustes</button>
-
-        <div id="adj-results"></div>
-      </div>
-
     </div>
+
+    <!-- VDOT SCORE STRIP — compact, at the bottom -->
+    <div class="vdot-strip">
+      <div class="vdot-strip-score" id="vdot-display">--</div>
+      <div class="vdot-strip-divider"></div>
+      <div class="vdot-strip-meta">
+        <div class="vdot-strip-label">Score VDOT</div>
+        <div class="vdot-strip-ref" id="vdot-ref-display">-- em --</div>
+        <div class="vdot-strip-level" id="vdot-level-display">--</div>
+      </div>
+      <button class="vdot-info-btn" onclick="showVdotInfo()" aria-label="O que é o VDOT?" title="O que é o VDOT?">ⓘ</button>
+    </div>
+
   </div>
 
 </div>
@@ -1277,176 +1235,35 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // =====================
-// ADJ TOGGLES
-// =====================
-function toggleAdj(id, forceState) {
-  const fields = document.getElementById('fields-' + id);
-  const toggle = document.getElementById('toggle-' + id);
-  const isOpen = fields.classList.contains('open');
-  const shouldOpen = forceState !== undefined ? forceState : !isOpen;
-  fields.classList.toggle('open', shouldOpen);
-  toggle.checked = shouldOpen;
-}
-
-// =====================
-// ADJUSTMENTS
-// =====================
-function calcTempHumAdj(tempC, humPct) {
-  let pctAdj = 0;
-  if (tempC > 15.5) {
-    pctAdj += (tempC - 15.5) * (0.4 / 0.556);
-  }
-  if (humPct > 60) {
-    pctAdj += (humPct - 60) * 0.2;
-  }
-  return Math.min(pctAdj / 100, 0.20);
-}
-
-function calcAltitudeAdj(altM) {
-  if (altM <= 1219) return { min: 0, max: 0 };
-  if (altM >= 5000) return { min: 12.4, max: 15.5 };
-
-  // Linear interpolation between breakpoints
-  const breakpoints = [
-    { alt: 1219, min: 0,    max: 0    },
-    { alt: 1524, min: 2.5,  max: 3.1  },
-    { alt: 1829, min: 5.0,  max: 6.2  },
-    { alt: 2134, min: 7.5,  max: 9.3  },
-    { alt: 2438, min: 9.9,  max: 12.4 },
-    { alt: 5000, min: 12.4, max: 15.5 }
-  ];
-
-  for (let i = 0; i < breakpoints.length - 1; i++) {
-    const lo = breakpoints[i], hi = breakpoints[i + 1];
-    if (altM >= lo.alt && altM <= hi.alt) {
-      const t = (altM - lo.alt) / (hi.alt - lo.alt);
-      return {
-        min: lo.min + t * (hi.min - lo.min),
-        max: lo.max + t * (hi.max - lo.max)
-      };
-    }
-  }
-  return { min: 12.4, max: 15.5 };
-}
-
-function calcGradeAdj(gainMPerKm, lossMPerKm) {
-  const upMin = gainMPerKm / 10 * 18;
-  const upMax = gainMPerKm / 10 * 24;
-  const downMin = lossMPerKm / 10 * 8;
-  const downMax = lossMPerKm / 10 * 12;
-  return { min: upMin - downMax, max: upMax - downMin };
-}
-
-function applyAdjustments() {
-  if (!state.vdot) return;
-  const { paces } = state;
-
-  const tempEnabled = document.getElementById('toggle-tempHum').checked;
-  const altEnabled = document.getElementById('toggle-altitude').checked;
-  const gradeEnabled = document.getElementById('toggle-grade').checked;
-
-  let tempHumAdj = 0, altAdj = { min: 0, max: 0 }, gradeAdj = { min: 0, max: 0 };
-
-  if (tempEnabled) {
-    const temp = parseFloat(document.getElementById('adj-temp').value) || 15.5;
-    const hum = parseFloat(document.getElementById('adj-hum').value) || 60;
-    tempHumAdj = calcTempHumAdj(temp, hum);
-  }
-  if (altEnabled) {
-    const alt = parseFloat(document.getElementById('adj-alt').value) || 0;
-    altAdj = calcAltitudeAdj(alt);
-  }
-  if (gradeEnabled) {
-    const gain = parseFloat(document.getElementById('adj-gain').value) || 0;
-    const loss = parseFloat(document.getElementById('adj-loss').value) || 0;
-    gradeAdj = calcGradeAdj(gain, loss);
-  }
-
-  const adjResults = document.getElementById('adj-results');
-  if (!tempEnabled && !altEnabled && !gradeEnabled) {
-    adjResults.innerHTML = '<p style="text-align:center;color:var(--text-light);margin-top:20px;font-size:14px;">Ativa pelo menos um modificador para ver os paces ajustados.</p>';
-    return;
-  }
-
-  const zones = [
-    { key: 'E', label: 'E — Fácil', affectedByAlt: true, affectedByGrade: true },
-    { key: 'M', label: 'M — Maratona', affectedByAlt: true, affectedByGrade: true },
-    { key: 'T', label: 'T — Limiar', affectedByAlt: true, affectedByGrade: true },
-    { key: 'I', label: 'I — Intervalos', affectedByAlt: true, affectedByGrade: true },
-    { key: 'R', label: 'R — Repetições', affectedByAlt: false, affectedByGrade: true }
-  ];
-
-  let html = `<table class="adj-result-table" style="margin-top:24px">
-    <thead><tr><th>Zona</th><th>Pace Base</th><th>Pace Ajustado</th><th>Diferença</th></tr></thead><tbody>`;
-
-  for (const z of zones) {
-    const p = paces[z.key];
-    const baseStr = z.key === 'E'
-      ? `${fmtPaceShort(p.paceMax)}–${fmtPaceShort(p.paceMin)}`
-      : fmtPaceShort(p.paceMin);
-
-    let totalMinSec = 0, totalMaxSec = 0;
-
-    // Temp/Hum adjustment (percentage-based)
-    const baseForCalc = z.key === 'E' ? (p.paceMin + p.paceMax)/2 : p.paceMin;
-    totalMinSec += baseForCalc * tempHumAdj;
-    totalMaxSec += baseForCalc * tempHumAdj;
-
-    // Altitude adjustment
-    if (z.affectedByAlt) {
-      totalMinSec += altAdj.min;
-      totalMaxSec += altAdj.max;
-    }
-    // Grade adjustment
-    if (z.affectedByGrade) {
-      totalMinSec += gradeAdj.min;
-      totalMaxSec += gradeAdj.max;
-    }
-
-    const isRzone = z.key === 'R' && altEnabled && !tempEnabled && !gradeEnabled;
-
-    let adjStr, deltaStr;
-    if (z.key === 'R' && !tempEnabled && !gradeEnabled && altEnabled) {
-      adjStr = '<em style="color:var(--text-light);font-size:12px">Sem ajuste de altitude</em>';
-      deltaStr = '<span class="delta-zero">—</span>';
-    } else if (Math.abs(totalMinSec) < 0.1 && Math.abs(totalMaxSec) < 0.1) {
-      adjStr = baseStr;
-      deltaStr = '<span class="delta-zero">Sem ajuste</span>';
-    } else {
-      const adjustedMin = z.key === 'E' ? p.paceMax + totalMinSec : p.paceMin + totalMinSec;
-      const adjustedMax = z.key === 'E' ? p.paceMin + totalMaxSec : p.paceMin + totalMaxSec;
-      adjStr = z.key === 'E'
-        ? `${fmtPaceShort(adjustedMin)}–${fmtPaceShort(adjustedMax)}`
-        : fmtPaceShort(adjustedMin);
-      const avgDelta = (totalMinSec + totalMaxSec) / 2;
-      deltaStr = `<span class="${avgDelta > 0 ? 'delta-positive' : 'delta-zero'}">${avgDelta > 0 ? '+' : ''}${Math.round(avgDelta)} seg/km</span>`;
-    }
-
-    html += `<tr>
-      <td><span class="zone-pill zone-${z.key}" style="font-size:13px;padding:4px 10px">${z.label}</span></td>
-      <td>${baseStr} /km</td>
-      <td>${adjStr}${adjStr.includes('em>') ? '' : ' /km'}</td>
-      <td>${deltaStr}</td>
-    </tr>`;
-  }
-
-  html += '</tbody></table>';
-  adjResults.innerHTML = html;
-}
-
-// =====================
 // TOOLTIP
 // =====================
+function showVdotInfo() {
+  const level = state.vdot ? getLevel(state.vdot) : null;
+  document.getElementById('tooltip-zone-name').textContent = state.vdot
+    ? 'VDOT ' + state.vdot.toFixed(1)
+    : 'O que é o VDOT?';
+  document.getElementById('tooltip-info').innerHTML =
+    '<dt>O que é o VDOT?</dt>' +
+    '<dd>Medida de aptidão aeróbica desenvolvida pelo Dr. Jack Daniels e pelo matemático Jimmy Gilbert. Estima o VO₂Max — o volume máximo de oxigénio consumido por minuto — ajustado à performance de corrida real.</dd>' +
+    '<dt>Como é calculado?</dt>' +
+    '<dd>A partir do tempo e da distância de uma prova recente, usando a fórmula de Daniels-Gilbert que relaciona velocidade com consumo de oxigénio.</dd>' +
+    '<dt>Para que serve?</dt>' +
+    '<dd>Prescreve ritmos de treino exactos para as 5 zonas (E, M, T, I, R) e prevê tempos equivalentes noutras distâncias — a partir de um único resultado de prova.</dd>' +
+    (level ? '<dt>O teu nível</dt><dd><strong>' + level.label + '</strong> — ' + level.desc + '</dd>' : '') +
+    '<dt>Escala de referência</dt>' +
+    '<dd>30–39 Iniciante &nbsp;·&nbsp; 40–49 Recreativo &nbsp;·&nbsp; 50–59 Recreativo Avançado &nbsp;·&nbsp; 60–69 Competitivo &nbsp;·&nbsp; 70–79 Altamente Competitivo &nbsp;·&nbsp; 80+ Elite</dd>';
+  document.getElementById('tooltip-overlay').classList.add('open');
+}
+
 function showTooltip(zoneKey) {
   const info = ZONE_INFO[zoneKey];
   document.getElementById('tooltip-zone-name').textContent = info.name;
-  document.getElementById('tooltip-info').innerHTML = `
-    <dt>Intensidade</dt><dd>${info.intensity}</dd>
-    <dt>FC Correspondente</dt><dd>${info.fc}</dd>
-    <dt>Duração Sugerida</dt><dd>${info.duration}</dd>
-    <dt>Objetivo Fisiológico</dt><dd>${info.goal}</dd>
-    <dt>Quando Usar</dt><dd>${info.when}</dd>
-  `;
+  document.getElementById('tooltip-info').innerHTML =
+    '<dt>Intensidade</dt><dd>' + info.intensity + '</dd>' +
+    '<dt>FC Correspondente</dt><dd>' + info.fc + '</dd>' +
+    '<dt>Duração Sugerida</dt><dd>' + info.duration + '</dd>' +
+    '<dt>Objetivo Fisiológico</dt><dd>' + info.goal + '</dd>' +
+    '<dt>Quando Usar</dt><dd>' + info.when + '</dd>';
   document.getElementById('tooltip-overlay').classList.add('open');
 }
 
@@ -1459,204 +1276,152 @@ function closeTooltipBtn() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTooltipBtn(); });
 
 // =====================
-// PDF EXPORT (jsPDF via CDN)
+// PDF EXPORT — sem dependências externas
+// Gera uma página HTML formatada para impressão/PDF numa nova janela
 // =====================
 function exportPDF() {
   if (!state.vdot) return;
   const btn = document.getElementById('pdf-btn');
-  btn.innerHTML = '⏳ A gerar PDF...';
+  btn.innerHTML = '⏳ A preparar PDF...';
   btn.disabled = true;
 
-  function doGenerate() {
-    try {
-      generatePDF();
-    } catch(e) {
-      alert('Erro ao gerar PDF: ' + e.message);
-    }
-    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg> Exportar PDF dos Ritmos`;
-    btn.disabled = false;
+  try {
+    generatePrintWindow();
+  } catch(e) {
+    alert('Erro ao gerar PDF: ' + e.message);
   }
 
-  if (window.jspdf) {
-    doGenerate();
-    return;
-  }
-
-  const script = document.createElement('script');
-  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-  script.onload = doGenerate;
-  script.onerror = function() {
-    alert('Não foi possível carregar a biblioteca jsPDF. Verifique a ligação à internet.');
-    btn.innerHTML = '⬇ Exportar PDF dos Ritmos';
-    btn.disabled = false;
-  };
-  document.head.appendChild(script);
+  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg> Exportar PDF dos Ritmos`;
+  btn.disabled = false;
 }
 
-function generatePDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+function generatePrintWindow() {
   const { vdot, distKey, timeSec, paces } = state;
   const dist = DISTANCES[distKey];
   const today = new Date().toLocaleDateString('pt-PT');
+  const level = getLevel(vdot);
 
-  // Header bar
-  doc.setFillColor(231, 155, 16);
-  doc.rect(0, 0, 210, 32, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(24);
-  doc.setTextColor(51, 37, 1);
-  doc.text('CALCULADORA VDOT', 15, 19);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Jack Daniels Running Formula', 15, 27);
-  doc.text(today, 195, 19, { align: 'right' });
-
-  // VDOT summary block
-  doc.setFontSize(28);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(231, 155, 16);
-  doc.text(vdot.toFixed(1), 15, 52);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 80, 40);
-  doc.text('VDOT', 15, 58);
-  doc.setTextColor(40, 40, 40);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${dist.label}  ·  ${fmtTime(timeSec)}`, 42, 50);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 80, 40);
-  doc.text(getLevel(vdot).label, 42, 57);
-
-  // Divider
-  doc.setDrawColor(231, 155, 16);
-  doc.setLineWidth(0.5);
-  doc.line(15, 63, 195, 63);
-
-  // Section title
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(40, 40, 40);
-  doc.text('RITMOS DE TREINO', 15, 71);
-
-  let y = 76;
-
-  // Table header
-  doc.setFillColor(51, 37, 1);
-  doc.rect(15, y, 180, 8, 'F');
-  doc.setTextColor(255, 185, 46);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.text('ZONA', 18, y + 5.5);
-  doc.text('PACE', 70, y + 5.5);
-  doc.text('PASSAGENS DE PISTA', 115, y + 5.5);
-  y += 8;
-
-  // Zone rows — E has range, others single pace
-  const zoneRows = [
-    {
-      label: 'E — Fácil',
-      pace: `${fmtPaceShort(paces.E.paceMax)} – ${fmtPaceShort(paces.E.paceMin)} /km`,
-      track: '—',
-      color: '#FFE96A', dark: false
-    },
-    {
-      label: 'M — Maratona',
-      pace: `${fmtPaceShort(paces.M.paceMin)} /km`,
-      track: '—',
-      color: '#FFB446', dark: false
-    },
-    {
-      label: 'T — Limiar',
-      pace: `${fmtPaceShort(paces.T.paceMin)} /km`,
-      track: '—',
-      color: '#FFB92E', dark: false
-    },
-    {
-      label: 'I — Intervalos',
-      pace: `${fmtPaceShort(paces.I.paceMin)} /km`,
-      track: `200m: ${fmtTrackTime(0.2,paces.I.paceMin)}  400m: ${fmtTrackTime(0.4,paces.I.paceMin)}  800m: ${fmtTrackTime(0.8,paces.I.paceMin)}  1km: ${fmtTrackTime(1.0,paces.I.paceMin)}`,
-      color: '#E79B10', dark: true
-    },
-    {
-      label: 'R — Repetições',
-      pace: `${fmtPaceShort(paces.R.paceMin)} /km`,
-      track: `200m: ${fmtTrackTime(0.2,paces.R.paceMin)}  400m: ${fmtTrackTime(0.4,paces.R.paceMin)}`,
-      color: '#A16700', dark: true
-    },
-  ];
-
-  doc.setFontSize(9);
-  zoneRows.forEach(row => {
-    const r = parseInt(row.color.slice(1,3),16);
-    const g = parseInt(row.color.slice(3,5),16);
-    const b = parseInt(row.color.slice(5,7),16);
-    doc.setFillColor(r, g, b);
-    doc.rect(15, y, 180, 10, 'F');
-    const tc = row.dark ? 255 : 40;
-    doc.setTextColor(tc, row.dark ? 240 : 30, row.dark ? 200 : 5);
-    doc.setFont('helvetica', 'bold');
-    doc.text(row.label, 18, y + 6.5);
-    doc.setFont('helvetica', 'normal');
-    doc.text(row.pace, 70, y + 6.5);
-    doc.setFontSize(8);
-    doc.text(row.track, 115, y + 6.5);
-    doc.setFontSize(9);
-    y += 10;
-  });
-
-  // Equivalents section
-  y += 6;
-  doc.setDrawColor(231, 155, 16);
-  doc.setLineWidth(0.3);
-  doc.line(15, y, 195, y);
-  y += 6;
-
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(40, 40, 40);
-  doc.text('TEMPOS EQUIVALENTES PREVISTOS', 15, y);
-  y += 6;
-
-  doc.setFillColor(51, 37, 1);
-  doc.rect(15, y, 180, 8, 'F');
-  doc.setTextColor(255, 185, 46);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.text('DISTÂNCIA', 18, y + 5.5);
-  doc.text('TEMPO PREVISTO', 90, y + 5.5);
-  doc.text('PACE MÉDIO', 145, y + 5.5);
-  y += 8;
-
-  let rowOdd = false;
+  // Build equivalent times rows
+  let equivRows = '';
   for (const [key, d] of Object.entries(DISTANCES)) {
     const predSec = key === distKey ? timeSec : vdotToTime(vdot, d.km);
     const pace = predSec / d.km;
     const isRef = key === distKey;
-    doc.setFillColor(isRef ? 255 : (rowOdd ? 248 : 255), isRef ? 230 : (rowOdd ? 243 : 255), isRef ? 180 : (rowOdd ? 220 : 255));
-    doc.rect(15, y, 180, 9, 'F');
-    doc.setTextColor(40, 40, 40);
-    doc.setFont('helvetica', isRef ? 'bold' : 'normal');
-    doc.setFontSize(9);
-    doc.text(d.label + (isRef ? ' ◀' : ''), 18, y + 6);
-    doc.text(fmtTime(predSec), 90, y + 6);
-    doc.text(fmtPace(pace), 145, y + 6);
-    y += 9;
-    rowOdd = !rowOdd;
+    equivRows += `
+      <tr class="${isRef ? 'ref-row' : ''}">
+        <td>${d.label}${isRef ? ' <span class="ref-tag">ref.</span>' : ''}</td>
+        <td>${fmtTime(predSec)}</td>
+        <td>${fmtPace(pace)}</td>
+      </tr>`;
   }
 
-  // Footer
-  doc.setFontSize(7);
-  doc.setTextColor(140, 120, 90);
-  doc.setFont('helvetica', 'normal');
-  const disclaimer = 'Ritmos calculados pelo Sistema VDOT (Daniels & Gilbert, 1979). Valores indicativos — consulte um treinador qualificado.\nVDOT é marca registada da The Run SMART Project, LLC. Esta calculadora não é endossada nem afiliada à The Run SMART Project ou ao Dr. Jack Daniels.';
-  doc.text(disclaimer, 15, 278, { maxWidth: 180 });
+  // Build zone rows
+  const zoneData = [
+    { key:'E', label:'E — Fácil',      pace: fmtPaceShort(paces.E.paceMax) + ' – ' + fmtPaceShort(paces.E.paceMin) + ' /km', track: '—',  color:'#FFE96A', textDark: true  },
+    { key:'M', label:'M — Maratona',   pace: fmtPaceShort(paces.M.paceMin) + ' /km', track: '—',  color:'#FFB446', textDark: true  },
+    { key:'T', label:'T — Limiar',     pace: fmtPaceShort(paces.T.paceMin) + ' /km', track: '—',  color:'#FFB92E', textDark: true  },
+    { key:'I', label:'I — Intervalos', pace: fmtPaceShort(paces.I.paceMin) + ' /km',
+      track: '200m: ' + fmtTrackTime(0.2,paces.I.paceMin) + '  ·  400m: ' + fmtTrackTime(0.4,paces.I.paceMin) + '  ·  800m: ' + fmtTrackTime(0.8,paces.I.paceMin) + '  ·  1km: ' + fmtTrackTime(1.0,paces.I.paceMin) + '  ·  1,2km: ' + fmtTrackTime(1.2,paces.I.paceMin),
+      color:'#E79B10', textDark: false },
+    { key:'R', label:'R — Repetições', pace: fmtPaceShort(paces.R.paceMin) + ' /km',
+      track: '200m: ' + fmtTrackTime(0.2,paces.R.paceMin) + '  ·  400m: ' + fmtTrackTime(0.4,paces.R.paceMin),
+      color:'#A16700', textDark: false },
+  ];
+  let zoneRows = '';
+  for (const z of zoneData) {
+    const tc = z.textDark ? '#2C1F05' : '#FDFAF3';
+    zoneRows += `
+      <tr>
+        <td style="background:${z.color};color:${tc};font-weight:700">${z.label}</td>
+        <td style="background:${z.color};color:${tc};font-family:monospace">${z.pace}</td>
+        <td style="background:${z.color};color:${tc};font-size:11px;font-family:monospace">${z.track}</td>
+      </tr>`;
+  }
 
-  const distLabel = distKey === 'half' ? 'HM' : distKey === 'full' ? 'MAR' : `${distKey}km`;
-  const dateStr = new Date().toISOString().slice(0, 10);
-  doc.save(`vdot-${vdot.toFixed(1)}-${distLabel}-${dateStr}.pdf`);
+  const html = `<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<title>VDOT ${vdot.toFixed(1)} — ${dist.label} — ${today}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #2C1F05; background: white; }
+
+  .header { background: #E79B10; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-radius: 6px; margin-bottom: 16px; }
+  .header-title { font-size: 20pt; font-weight: 900; color: #332501; letter-spacing: 2px; }
+  .header-sub { font-size: 9pt; color: rgba(51,37,1,0.7); margin-top: 2px; }
+  .header-date { font-size: 9pt; color: rgba(51,37,1,0.7); text-align: right; }
+
+  .vdot-block { display: flex; align-items: center; gap: 20px; background: #FDFAF3; border: 2px solid #E8D5A0; border-radius: 8px; padding: 14px 20px; margin-bottom: 16px; }
+  .vdot-num { font-size: 40pt; font-weight: 900; color: #E79B10; line-height: 1; }
+  .vdot-meta-label { font-size: 8pt; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #6B5230; }
+  .vdot-meta-ref { font-size: 13pt; font-weight: 700; color: #2C1F05; margin: 3px 0; }
+  .vdot-level { display: inline-block; background: #E79B10; color: #332501; font-size: 8pt; font-weight: 700; padding: 2px 10px; border-radius: 12px; }
+
+  h2 { font-size: 10pt; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #6B5230; margin: 14px 0 6px; border-bottom: 1.5px solid #E79B10; padding-bottom: 4px; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  th { background: #332501; color: #FFB92E; font-size: 8pt; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 7px 10px; text-align: left; }
+  td { padding: 8px 10px; border-bottom: 1px solid #E8D5A0; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr.ref-row td { background: rgba(231,155,16,0.12); font-weight: 700; }
+  .ref-tag { background: #E79B10; color: #332501; font-size: 7pt; font-weight: 700; padding: 1px 6px; border-radius: 8px; margin-left: 4px; }
+
+  .disclaimer { font-size: 7.5pt; color: #8B7050; line-height: 1.6; margin-top: 14px; padding-top: 10px; border-top: 1px solid #E8D5A0; }
+
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">CALCULADORA VDOT</div>
+    <div class="header-sub">Jack Daniels Running Formula</div>
+  </div>
+  <div class="header-date">${today}</div>
+</div>
+
+<div class="vdot-block">
+  <div class="vdot-num">${vdot.toFixed(1)}</div>
+  <div>
+    <div class="vdot-meta-label">Score VDOT</div>
+    <div class="vdot-meta-ref">${dist.label} &nbsp;·&nbsp; ${fmtTime(timeSec)}</div>
+    <div class="vdot-level">${level.label}</div>
+  </div>
+</div>
+
+<h2>Ritmos de Treino</h2>
+<table>
+  <thead><tr><th>Zona</th><th>Pace</th><th>Passagens de Pista</th></tr></thead>
+  <tbody>${zoneRows}</tbody>
+</table>
+
+<h2>Tempos Equivalentes Previstos</h2>
+<table>
+  <thead><tr><th>Distância</th><th>Tempo Previsto</th><th>Pace Médio</th></tr></thead>
+  <tbody>${equivRows}</tbody>
+</table>
+
+<div class="disclaimer">
+  Ritmos calculados pelo Sistema VDOT (Daniels &amp; Gilbert, 1979). Valores indicativos — consulte um treinador qualificado.<br>
+  VDOT é marca registada da The Run SMART Project, LLC. Esta calculadora não é endossada nem afiliada à The Run SMART Project ou ao Dr. Jack Daniels.
+</div>
+
+<script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) {
+    alert('O browser bloqueou a abertura de uma nova janela. Permite popups para este site e tenta novamente.');
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
 }
 
 // Init
